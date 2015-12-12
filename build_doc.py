@@ -4,15 +4,16 @@ import os
 import sys
 import yaml
 import shutil
+import argparse
 from subprocess import call
 from os.path import isfile, join
 
-def check_args():
-	if (len(sys.argv) != 3):
-		print """\
-		Usage: build_doc <source_dir> <target_dir>
-		"""
-		sys.exit(1)
+def parse_args():
+	parser = argparse.ArgumentParser(description='Compile markdown documentation files into HTML or PDF')
+	parser.add_argument('source_dir', metavar='source', help='Source path of the documentation')
+	parser.add_argument('target_dir', metavar='destination', help='Target path to save the generated docs');
+	parser.add_argument('-b', '--build_all', help='Build all version from git', action='store_true')
+	return parser.parse_args()
 
 def yaml_load(filename):
 	stream = file(filename, 'r')
@@ -51,9 +52,6 @@ def gen_meta_files(doc_meta, cur_version, versions, meta_dir):
 	write_to_file(template_version, meta_dir + "/header_versions.html")
 
 
-
-
-
 def compile_pandoc(source_dir, theme_dir, meta_dir, target_file):
 	# Get the list of all the source markdown files
 	pandoc_args = [
@@ -74,11 +72,23 @@ def compile_pandoc(source_dir, theme_dir, meta_dir, target_file):
 
 	call(pandoc_args)
 
+def gen_doc_file(version):
+	gen_meta_files(doc_meta, version, versions, meta_dir)
+	target_file = html_dir + "/%s%s.html" % (file_prefix, version)
+	compile_pandoc(source_dir, theme_dir, meta_dir, target_file)
 
-check_args()
 
-source_dir = sys.argv[1]
-target_dir = sys.argv[2]
+def checkout_git(git_path, version):
+	shell_args = ['checkout_git.sh', git_path, version]
+	call(shell_args);
+
+
+# Parse commandline args
+args = parse_args()
+print args.build_all
+
+source_dir = args.source_dir
+target_dir = args.target_dir
 
 # Load the meta data from the source directory
 doc_meta = yaml_load(source_dir + "/doc.yaml")
@@ -106,9 +116,12 @@ os.makedirs(meta_dir)
 
 file_prefix = doc_meta['file_prefix']
 for version in versions:
-	gen_meta_files(doc_meta, version, versions, meta_dir)
-	target_file = html_dir + "/%s%s.html" % (file_prefix, version)
-	compile_pandoc(source_dir, theme_dir, meta_dir, target_file)
+	if args.build_all:
+		checkout_git(version)
+
+	gen_doc_file(version)
+	if args.build_all:
+		break
 
 shutil.rmtree(meta_dir, True)
 
