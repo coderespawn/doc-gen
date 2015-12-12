@@ -26,6 +26,16 @@ def write_to_file(content, filepath):
 	text_file.write(content)
 	text_file.close()
 
+def read_file(filepath):
+	text_file = open(filepath, "r")
+	content = text_file.read()
+	text_file.close()
+	return content
+
+def remove_file(filename):
+	if os.path.exists(filename):
+		os.remove(filename)
+
 def gen_meta_files(doc_meta, cur_version, versions, meta_dir):
 	title = """
 			<div class="doc-title">%s</div>
@@ -74,26 +84,46 @@ def compile_pandoc(source_dir, theme_dir, meta_dir, target_file):
 
 def gen_doc_file(version):
 	gen_meta_files(doc_meta, version, versions, meta_dir)
-	target_file = html_dir + "/%s%s.html" % (file_prefix, version)
+	file_prefix = doc_meta['file_prefix']
+	filename = "%s%s.html" % (file_prefix, version)
+	target_file = "%s/%s" % (html_dir, filename)
 	compile_pandoc(source_dir, theme_dir, meta_dir, target_file)
+	return filename
 
 
-def checkout_git(git_path, branch):
-	shell_args = ['checkout_git.sh', git_path, branch]
+def git_checkout(git_path, branch):
+	print
+	print "#### Checking out Git Branch:", branch
+	shell_args = ['./git_checkout.sh', git_path, branch]
 	call(shell_args);
+
+def create_index_file(redirect_filename):
+	redirect_path = "html/" + redirect_filename
+	if args.build_all:
+		redirect_path = "stage/" + redirect_path
+
+	redirect_html = read_file(theme_dir + "/index_redirector.html")
+	redirect_html = redirect_html % (redirect_path, redirect_path)
+	# Save this in the gen folder as index.html
+	write_to_file(redirect_html, gen_dir + "/index.html")
 
 
 # Parse commandline args
 args = parse_args()
-print args.build_all
 
 source_dir = args.source_dir
 target_dir = args.target_dir
 
 # Load the meta data from the source directory
-doc_meta = yaml_load(source_dir + "/doc.yaml")
-gen_meta = yaml_load(source_dir + "/generator.yaml")
-versions = yaml_load(source_dir + "/versions.yaml")
+if args.build_all:
+	git_checkout(source_dir, 'gh-pages')
+	doc_meta = yaml_load(source_dir + "/doc.yaml")
+	gen_meta = yaml_load(source_dir + "/generator.yaml")
+	versions = yaml_load(source_dir + "/versions.yaml")
+else:
+	doc_meta = {'file_prefix': 'doc_', 'title': 'Documentation'}
+	gen_meta = {'pdf': False, 'theme': 'skyblue'}
+	versions = ['0']
 
 # Recreate the output dir
 gen_dir = "/tmp/stage"
@@ -114,14 +144,32 @@ shutil.copytree(source_dir + "/assets", gen_dir + "/assets");
 meta_dir = gen_dir + "/tmp"
 os.makedirs(meta_dir)
 
-file_prefix = doc_meta['file_prefix']
+latest_version_filename = None
 for version in versions:
 	if args.build_all:
-		checkout_git(version)
+		git_checkout(source_dir, version)
 
-	gen_doc_file(version)
-	if args.build_all:
+	doc_filename = gen_doc_file(version)
+	if latest_version_filename is None:
+		latest_version_filename = doc_filename
+
+	if not args.build_all:
 		break
 
+create_index_file(latest_version_filename)
+
+
+# Remove the intermediate folder
 shutil.rmtree(meta_dir, True)
+
+# If we built for all version, then place the stage directory in the gh-pages branch
+if args.build_all:
+	git_checkout(source_dir, 'gh-pages')
+	source_stage = source_dir + "/stage"
+	shutil.rmtree(source_stage, True)
+	shutil.copytree(gen_dir, source_stage)
+	remove_file(source_dir + "/index.html")
+	shutil.move(source_stage + "/index.html", source_dir)
+
+
 
