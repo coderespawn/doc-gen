@@ -78,8 +78,8 @@ def gen_doc_file(version):
 	compile_pandoc(source_dir, theme_dir, meta_dir, target_file)
 
 
-def checkout_git(git_path, version):
-	shell_args = ['checkout_git.sh', git_path, version]
+def checkout_git(git_path, branch):
+	shell_args = ['checkout_git.sh', git_path, branch]
 	call(shell_args);
 
 
