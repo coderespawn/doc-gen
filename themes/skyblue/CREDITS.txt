@@ -1,0 +1,2 @@
+Theme inspired by Divergent Media's ClipWrap documentation website
+http://www.divergentmedia.com/blog/manualworkflow/
