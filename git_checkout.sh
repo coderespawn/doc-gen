@@ -8,7 +8,7 @@ fi
 GIT_PATH=$1
 BRANCH=$2
 
-pushd $GIT_PATH
+pushd $GIT_PATH > /dev/null
 git checkout $BRANCH
 git pull
-popd
+popd > /dev/null

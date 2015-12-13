@@ -5,11 +5,11 @@ import sys
 import yaml
 import shutil
 import argparse
-from subprocess import call
+from subprocess import call, check_output
 from os.path import isfile, join
 
 def parse_args():
-	parser = argparse.ArgumentParser(description='Compile markdown documentation files into HTML or PDF')
+	parser = argparse.ArgumentParser(description='Compile markdown documentation files into HTML')
 	parser.add_argument('source_dir', metavar='source', help='Source path of the documentation')
 	parser.add_argument('-b', '--build_all', help='Build all version from git', action='store_true')
 	return parser.parse_args()
@@ -85,20 +85,29 @@ def compile_pandoc(source_dir, theme_dir, meta_dir, target_file):
 def gen_doc_file(version):
 	gen_meta_files(doc_meta, version, versions, meta_dir)
 	file_prefix = doc_meta['file_prefix']
-	filename = "%s%s.html" % (file_prefix, version)
-	target_file = "%s/%s" % (html_dir, filename)
+	
+	# Generate html documentation
+	html_filename = "%s%s.html" % (file_prefix, version)
+	target_file = "%s/%s" % (html_dir, html_filename)
 	compile_pandoc(source_dir, theme_dir, meta_dir, target_file)
-	return filename
+	
+	return html_filename
 
+def fix_os_command(command):
+	cmd_prefix = './'
+	if os.name == 'nt':
+		cmd_prefix = ''
+	return cmd_prefix + command
+	
+def git_reset_ghpages(git_path):
+	# Pull the changes only if we are in gh-pages to avoid errors during rebuild
+	shell_args = [fix_os_command('reset_ghpages.sh'), git_path]
+	call(shell_args, shell=True);
 
 def git_checkout(git_path, branch):
 	print
 	print "#### Checking out Git Branch:", branch
-	cmd_prefix = './'
-	if os.name == 'nt':
-		cmd_prefix = ''
-	shell_args = [cmd_prefix + 'git_checkout.sh', git_path, branch]
-	print shell_args
+	shell_args = [fix_os_command('git_checkout.sh'), git_path, branch]
 	call(shell_args, shell=True);
 
 def create_index_file(redirect_filename):
@@ -116,8 +125,10 @@ def create_index_file(redirect_filename):
 args = parse_args()
 source_dir = args.source_dir
 
+
 # Load the meta data from the source directory
 if args.build_all:
+	git_reset_ghpages(source_dir)
 	git_checkout(source_dir, 'config')
 	doc_meta = yaml_load(source_dir + "/doc.yaml")
 	gen_meta = yaml_load(source_dir + "/generator.yaml")
@@ -127,7 +138,7 @@ else:
 	gen_meta = {'pdf': False, 'theme': 'skyblue'}
 	versions = ['0']
 config = yaml_load("./config.yaml")
-	
+
 # Recreate the output dir
 gen_dir = config['temp_stage_dir']
 html_dir = gen_dir + "/html"
