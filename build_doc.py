@@ -11,7 +11,6 @@ from os.path import isfile, join
 def parse_args():
 	parser = argparse.ArgumentParser(description='Compile markdown documentation files into HTML or PDF')
 	parser.add_argument('source_dir', metavar='source', help='Source path of the documentation')
-	parser.add_argument('target_dir', metavar='destination', help='Target path to save the generated docs');
 	parser.add_argument('-b', '--build_all', help='Build all version from git', action='store_true')
 	return parser.parse_args()
 
@@ -112,7 +111,6 @@ def create_index_file(redirect_filename):
 args = parse_args()
 
 source_dir = args.source_dir
-target_dir = args.target_dir
 
 # Load the meta data from the source directory
 if args.build_all:
