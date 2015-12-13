@@ -15,7 +15,6 @@ def parse_args():
 	return parser.parse_args()
 
 def yaml_load(filename):
-	print "yaml load: " + filename
 	stream = file(filename, 'r')
 	obj = yaml.load(stream)
 	stream.close()
@@ -76,6 +75,7 @@ def compile_pandoc(source_dir, theme_dir, meta_dir, target_file):
 
 	md_dir = source_dir + "/source"
 	md_files = [f for f in os.listdir(md_dir) if isfile(join(md_dir, f))]
+	md_files.sort()
 	for md_file in md_files:
 		md_file_path = md_dir + "/" + md_file
 		pandoc_args.append(md_file_path)
@@ -126,9 +126,10 @@ else:
 	doc_meta = {'file_prefix': 'doc_', 'title': 'Documentation'}
 	gen_meta = {'pdf': False, 'theme': 'skyblue'}
 	versions = ['0']
-
+config = yaml_load("./config.yaml")
+	
 # Recreate the output dir
-gen_dir = "/tmp/stage"
+gen_dir = config['temp_stage_dir']
 html_dir = gen_dir + "/html"
 shutil.rmtree(gen_dir, True)
 os.makedirs(gen_dir)
