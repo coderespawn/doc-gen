@@ -44,10 +44,18 @@ def gen_meta_files(doc_meta, cur_version, versions, meta_dir):
 	write_to_file(title, meta_dir + "/header_title.html")
 	
 	# Generate the branding file
-	branding_img = doc_meta['branding_img']
-	if branding_img is not None:
-		branding = get_template('template_branding.html') % branding_img
-		write_to_file(branding, meta_dir + "/header_branding.html")
+	if 'branding_img' in doc_meta:
+		branding = get_template('template_branding.html') % doc_meta['branding_img']
+	else:
+		branding = ''
+	write_to_file(branding, meta_dir + "/header_branding.html")
+	
+	# Generate the fork-me file
+	if 'fork_url' in doc_meta:
+		fork_me = get_template('template_fork_me.html') % doc_meta['fork_url']
+	else:
+		fork_me = ''
+	write_to_file(fork_me, meta_dir + "/header_fork_me.html")
 	
 	# Generate the versions file
 	prefix = doc_meta['file_prefix']
@@ -66,6 +74,7 @@ def compile_pandoc(source_dir, theme_dir, meta_dir, target_file):
 		'pandoc', '-s', '-S', '--toc',
 		'-o', target_file,
 		'-H', theme_dir + "/include.html",
+		'-B', meta_dir + "/header_fork_me.html",
 		'-B', theme_dir + "/header_main.html",
 		'-B', meta_dir + "/header_branding.html",
 		'-B', meta_dir + "/header_versions.html",
@@ -134,7 +143,7 @@ if args.build_all:
 	gen_meta = yaml_load(source_dir + "/generator.yaml")
 	versions = yaml_load(source_dir + "/versions.yaml")
 else:
-	doc_meta = {'file_prefix': 'doc_', 'title': 'Documentation'}
+	doc_meta = {'file_prefix': 'doc_', 'title': 'Documentation', 'fork_url': '#'}
 	gen_meta = {'pdf': False, 'theme': 'skyblue'}
 	versions = ['0']
 config = yaml_load("./config.yaml")
