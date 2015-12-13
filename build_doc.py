@@ -43,13 +43,20 @@ def gen_meta_files(doc_meta, cur_version, versions, meta_dir):
 	title = get_template('template_title.html') % doc_meta['title']
 	write_to_file(title, meta_dir + "/header_title.html")
 	
+	# Generate the branding file
+	branding_img = doc_meta['branding_img']
+	if branding_img is not None:
+		branding = get_template('template_branding.html') % branding_img
+		write_to_file(branding, meta_dir + "/header_branding.html")
+	
+	# Generate the versions file
 	prefix = doc_meta['file_prefix']
 	version_item_template = get_template('template_version_item.html')
 	version_items = []
 	for version in versions:
 		version_items.append(version_item_template % (prefix, version, version))
 	
-	template_version = get_template('template_version.html') % (cur_version, '\n'.join(version_items))
+	template_version = get_template('template_version.html') % ('\n'.join(version_items), cur_version)
 	write_to_file(template_version, meta_dir + "/header_versions.html")
 
 
@@ -60,6 +67,7 @@ def compile_pandoc(source_dir, theme_dir, meta_dir, target_file):
 		'-o', target_file,
 		'-H', theme_dir + "/include.html",
 		'-B', theme_dir + "/header_main.html",
+		'-B', meta_dir + "/header_branding.html",
 		'-B', meta_dir + "/header_versions.html",
 		'-B', meta_dir + "/header_title.html",
 		'-A', theme_dir + "/footer.html",
@@ -110,7 +118,7 @@ source_dir = args.source_dir
 
 # Load the meta data from the source directory
 if args.build_all:
-	git_checkout(source_dir, 'gh-pages')
+	git_checkout(source_dir, 'config')
 	doc_meta = yaml_load(source_dir + "/doc.yaml")
 	gen_meta = yaml_load(source_dir + "/generator.yaml")
 	versions = yaml_load(source_dir + "/versions.yaml")
@@ -126,6 +134,9 @@ html_dir = gen_dir + "/html"
 shutil.rmtree(gen_dir, True)
 os.makedirs(gen_dir)
 os.makedirs(html_dir)
+
+if args.build_all:
+	git_checkout(source_dir, 'dev')
 
 #Copy the theme
 theme_name = gen_meta["theme"]
