@@ -35,29 +35,21 @@ def remove_file(filename):
 	if os.path.exists(filename):
 		os.remove(filename)
 
+def get_template(filename):
+	return read_file(theme_dir + "/" + filename)
+		
 def gen_meta_files(doc_meta, cur_version, versions, meta_dir):
-	title = """
-			<div class="doc-title">%s</div>
-	""" % doc_meta['title']
+	# Generate the title file
+	title = get_template('template_title.html') % doc_meta['title']
 	write_to_file(title, meta_dir + "/header_title.html")
-
+	
 	prefix = doc_meta['file_prefix']
-	version_item_template = "<li><a href=\"%s%s.html\">%s</a></li>"
+	version_item_template = get_template('template_version_item.html')
 	version_items = []
 	for version in versions:
 		version_items.append(version_item_template % (prefix, version, version))
-
-	template_version = """
-			<div class="version-number">[%s]</div><div id="version-block" style="display: inline">
-			  <div class="dropdown">
-			    <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Version
-			    <span class="caret"></span></button>
-			    <ul class="dropdown-menu">
-			    %s
-			    </ul>
-			  </div>
-			</div>
-	""" % (cur_version, '\n'.join(version_items))
+	
+	template_version = get_template('template_version.html') % (cur_version, '\n'.join(version_items))
 	write_to_file(template_version, meta_dir + "/header_versions.html")
 
 
