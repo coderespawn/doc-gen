@@ -15,6 +15,7 @@ def parse_args():
 	return parser.parse_args()
 
 def yaml_load(filename):
+	print "yaml load: " + filename
 	stream = file(filename, 'r')
 	obj = yaml.load(stream)
 	stream.close()
@@ -93,8 +94,12 @@ def gen_doc_file(version):
 def git_checkout(git_path, branch):
 	print
 	print "#### Checking out Git Branch:", branch
-	shell_args = ['./git_checkout.sh', git_path, branch]
-	call(shell_args);
+	cmd_prefix = './'
+	if os.name == 'nt':
+		cmd_prefix = ''
+	shell_args = [cmd_prefix + 'git_checkout.sh', git_path, branch]
+	print shell_args
+	call(shell_args, shell=True);
 
 def create_index_file(redirect_filename):
 	redirect_path = "html/" + redirect_filename
@@ -109,7 +114,6 @@ def create_index_file(redirect_filename):
 
 # Parse commandline args
 args = parse_args()
-
 source_dir = args.source_dir
 
 # Load the meta data from the source directory
