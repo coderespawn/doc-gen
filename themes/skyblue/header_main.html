@@ -1,4 +1,8 @@
 
+  <link rel="stylesheet" href="../theme/highlight/styles/tomorrow.css">
+  <script src="../theme/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
 <script>
  $(document).ready(function () {
 	 $("#TOC").appendTo("#toc_host");
@@ -43,6 +47,7 @@ $(function() {
 
 
 $( document ).ready(function() {
+
 	$('img.svg').each(function(){
 		var $img = jQuery(this);
 		var imgID = $img.attr('id');
