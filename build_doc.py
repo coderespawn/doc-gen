@@ -86,6 +86,8 @@ def compile_pandoc(source_dir, theme_dir, meta_dir, target_file):
 	md_files = [f for f in os.listdir(md_dir) if isfile(join(md_dir, f))]
 	md_files.sort()
 	for md_file in md_files:
+		if md_file.startswith("."):
+			continue
 		md_file_path = md_dir + "/" + md_file
 		pandoc_args.append(md_file_path)
 
@@ -121,7 +123,6 @@ def git_checkout(git_path, branch):
 	print
 	print "#### Checking out Git Branch:", branch
 	shell_args = [fix_os_command('git_checkout.sh'), git_path, branch]
-	print "Executing:", shell_args
 	call(shell_args, shell=is_shell_command());
 
 def create_index_file(redirect_filename):
