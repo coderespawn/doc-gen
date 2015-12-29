@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import os
+import re
 import sys
 import yaml
 import shutil
@@ -12,6 +13,7 @@ def parse_args():
 	parser = argparse.ArgumentParser(description='Compile markdown documentation files into HTML')
 	parser.add_argument('source_dir', metavar='source', help='Source path of the documentation')
 	parser.add_argument('-b', '--build_all', help='Build all version from git', action='store_true')
+	parser.add_argument('-y', '--youtubify', help='Create Youtube embed frames', action='store_true')
 	return parser.parse_args()
 
 def yaml_load(filename):
@@ -100,8 +102,20 @@ def gen_doc_file(version):
 	target_file = "%s/%s" % (html_dir, html_filename)
 	compile_pandoc(source_dir, theme_dir, meta_dir, target_file)
 	
+	if args.youtubify:
+		youtubify(target_file)
+	
 	return html_filename
 
+def youtubify(target_file):
+	file_content = read_file(target_file)
+	pattern = re.compile(r'YOUTUBE\((.*?)\)')
+	embed = r'<iframe width="853" height="480" src="https://www.youtube.com/embed/\1?rel=0&amp;showinfo=0" frameborder="0" allowfullscreen></iframe>'
+	file_content = re.sub(pattern, embed, file_content)
+	write_to_file(file_content, target_file)
+	#for (video_id) in re.findall(pattern, file_content):
+	#	print video_id
+	
 def fix_os_command(command):
 	cmd_prefix = './'
 	if os.name == 'nt':
