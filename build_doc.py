@@ -88,6 +88,8 @@ def compile_pandoc(source_dir, theme_dir, meta_dir, target_file):
 	md_files = [f for f in os.listdir(md_dir) if isfile(join(md_dir, f))]
 	md_files.sort()
 	for md_file in md_files:
+		if md_file.startswith("."):
+			continue
 		md_file_path = md_dir + "/" + md_file
 		pandoc_args.append(md_file_path)
 
@@ -121,17 +123,21 @@ def fix_os_command(command):
 	if os.name == 'nt':
 		cmd_prefix = ''
 	return cmd_prefix + command
-	
+
+def is_shell_command():
+	# Return true only for windows
+	return os.name == 'nt'
+
 def git_reset_ghpages(git_path):
 	# Pull the changes only if we are in gh-pages to avoid errors during rebuild
 	shell_args = [fix_os_command('reset_ghpages.sh'), git_path]
-	call(shell_args, shell=True);
+	call(shell_args, shell=is_shell_command());
 
 def git_checkout(git_path, branch):
 	print
 	print "#### Checking out Git Branch:", branch
 	shell_args = [fix_os_command('git_checkout.sh'), git_path, branch]
-	call(shell_args, shell=True);
+	call(shell_args, shell=is_shell_command());
 
 def create_index_file(redirect_filename):
 	redirect_path = "html/" + redirect_filename

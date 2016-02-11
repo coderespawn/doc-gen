@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ "$#" -ne 2 ]; then
-    echo "Illegal number of parameters. Usage: GIT_PATH BRANCH"
+    echo "Illegal number of parameters. Usage: GIT_PATH BRANCH. Got: [$1] [$2] [$3]"
     exit 1
 fi
 
