@@ -41,15 +41,11 @@ def get_template(filename):
 	return read_file(theme_dir + "/" + filename)
 		
 def gen_meta_files(doc_meta, cur_version, versions, meta_dir):
-	# Generate the title file
-	title = get_template('template_title.html') % doc_meta['title']
-	write_to_file(title, meta_dir + "/header_title.html")
-
 	# Generate the pdf download link
 	file_prefix = doc_meta['file_prefix']
 	pdf_filename = "../pdf/%s%s.pdf" % (file_prefix, cur_version)
-	title = get_template('template_download_pdf.html') % pdf_filename
-	write_to_file(title, meta_dir + "/header_download_pdf.html")
+	pdf_link = get_template('template_download_pdf.html') % pdf_filename
+	write_to_file(pdf_link, meta_dir + "/header_download_pdf.html")
 	
 	# Generate the branding file
 	if 'branding_img' in doc_meta:
@@ -86,7 +82,6 @@ def compile_pandoc(source_dir, theme_dir, meta_dir, target_file):
 		'-B', theme_dir + "/header_main.html",
 		'-B', meta_dir + "/header_branding.html",
 		'-B', meta_dir + "/header_versions.html",
-		'-B', meta_dir + "/header_title.html",
 		'-A', theme_dir + "/footer.html",
 	]
 
@@ -212,7 +207,7 @@ if args.build_all:
 	gen_meta = yaml_load(source_dir + "/generator.yaml")
 	versions = yaml_load(source_dir + "/versions.yaml")
 else:
-	doc_meta = {'file_prefix': 'doc_', 'title': 'Documentation', 'fork_url': '#'}
+	doc_meta = {'file_prefix': 'doc_', 'fork_url': '#'}
 	gen_meta = {'pdf': False, 'theme': 'skyblue'}
 	versions = ['0']
 config = yaml_load("./config.yaml")
