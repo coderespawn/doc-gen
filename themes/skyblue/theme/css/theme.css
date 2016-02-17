@@ -115,6 +115,24 @@ h3 { border-bottom: 1px solid #ccc; }
  margin: 10px;
 }
 
+.title {
+    font-size: 32px;
+    font-weight: normal;
+    margin-top: 50px;
+    margin-bottom: -40px;
+	color: #2a6496;
+	border-bottom: 0px !important;
+	text-align: center !important;
+}
+
+.author {
+    font-size: 22px;
+    font-weight: normal;
+	color: #2a6496;
+	border-bottom: 0px !important;
+	text-align: center !important;
+}
+
 .doc-title {
     font-size: 32px;
     font-weight: normal;
