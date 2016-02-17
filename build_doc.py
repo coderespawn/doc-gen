@@ -44,6 +44,12 @@ def gen_meta_files(doc_meta, cur_version, versions, meta_dir):
 	# Generate the title file
 	title = get_template('template_title.html') % doc_meta['title']
 	write_to_file(title, meta_dir + "/header_title.html")
+
+	# Generate the pdf download link
+	file_prefix = doc_meta['file_prefix']
+	pdf_filename = "../pdf/%s%s.pdf" % (file_prefix, cur_version)
+	title = get_template('template_download_pdf.html') % pdf_filename
+	write_to_file(title, meta_dir + "/header_download_pdf.html")
 	
 	# Generate the branding file
 	if 'branding_img' in doc_meta:
@@ -69,7 +75,6 @@ def gen_meta_files(doc_meta, cur_version, versions, meta_dir):
 	template_version = get_template('template_version.html') % ('\n'.join(version_items), cur_version)
 	write_to_file(template_version, meta_dir + "/header_versions.html")
 
-
 def compile_pandoc(source_dir, theme_dir, meta_dir, target_file):
 	# Get the list of all the source markdown files
 	pandoc_args = [
@@ -77,6 +82,7 @@ def compile_pandoc(source_dir, theme_dir, meta_dir, target_file):
 		'-o', target_file,
 		'-H', theme_dir + "/include.html",
 		'-B', meta_dir + "/header_fork_me.html",
+		'-B', meta_dir + "/header_download_pdf.html",
 		'-B', theme_dir + "/header_main.html",
 		'-B', meta_dir + "/header_branding.html",
 		'-B', meta_dir + "/header_versions.html",
@@ -95,6 +101,38 @@ def compile_pandoc(source_dir, theme_dir, meta_dir, target_file):
 
 	call(pandoc_args)
 
+
+def compile_pandoc_pdf(source_dir, target_file, version):
+	# Get the list of all the source markdown files
+	pandoc_args = [
+		'pandoc', 
+		'-N', 
+		'--variable', 'mainfont="Calibri"', 
+		'--variable', 'sansfont="Calibri"', 
+		'--variable', 'monofont="Consolas"', 
+		'--variable', 'fontsize=12pt',
+		'--variable', 'version=' + version, 
+		'--latex-engine=xelatex',
+		'-o', target_file,
+	]
+
+	markdown_dir = source_dir + "/source"
+	old_working_dir = os.getcwd()
+	os.chdir(markdown_dir)
+
+	md_dir = "."
+	md_files = [f for f in os.listdir(md_dir) if isfile(join(md_dir, f))]
+	md_files.sort()
+	for md_file in md_files:
+		if md_file.startswith("."):
+			continue
+		md_file_path = md_dir + "/" + md_file
+		pandoc_args.append(md_file_path)
+
+	call(pandoc_args)
+	os.chdir(old_working_dir)
+
+
 def gen_doc_file(version):
 	gen_meta_files(doc_meta, version, versions, meta_dir)
 	file_prefix = doc_meta['file_prefix']
@@ -108,6 +146,17 @@ def gen_doc_file(version):
 		youtubify(target_file)
 	
 	return html_filename
+
+def gen_pdf_file(version):
+	file_prefix = doc_meta['file_prefix']
+	
+	# Generate html documentation
+	pdf_filename = "%s%s.pdf" % (file_prefix, version)
+	target_file = "%s/%s" % (pdf_dir, pdf_filename)
+	compile_pandoc_pdf(source_dir, target_file, version)
+
+	return pdf_filename
+
 
 def youtubify(target_file):
 	file_content = read_file(target_file)
@@ -171,9 +220,11 @@ config = yaml_load("./config.yaml")
 # Recreate the output dir
 gen_dir = config['temp_stage_dir']
 html_dir = gen_dir + "/html"
+pdf_dir = gen_dir + "/pdf"
 shutil.rmtree(gen_dir, True)
 os.makedirs(gen_dir)
 os.makedirs(html_dir)
+os.makedirs(pdf_dir)
 
 if args.build_all:
 	git_checkout(source_dir, 'dev')
@@ -191,6 +242,7 @@ meta_dir = gen_dir + "/tmp"
 os.makedirs(meta_dir)
 
 latest_version_filename = None
+# Build HTML versions
 for version in versions:
 	if args.build_all:
 		git_checkout(source_dir, version)
@@ -208,6 +260,12 @@ create_index_file(latest_version_filename)
 # Remove the intermediate folder
 shutil.rmtree(meta_dir, True)
 
+# Build PDF versions
+for version in versions:
+	pdf_filename = gen_pdf_file(version)
+	if not args.build_all:
+		break
+
 # If we built for all version, then place the stage directory in the gh-pages branch
 if args.build_all:
 	git_checkout(source_dir, 'gh-pages')
@@ -216,6 +274,4 @@ if args.build_all:
 	shutil.copytree(gen_dir, source_stage)
 	remove_file(source_dir + "/index.html")
 	shutil.move(source_stage + "/index.html", source_dir)
-
-
 

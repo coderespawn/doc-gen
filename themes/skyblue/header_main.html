@@ -5,11 +5,14 @@
 
 <script>
  $(document).ready(function () {
-	 $("#TOC").appendTo("#toc_host");
+	 $("#TOC").prependTo("#toc_host");
 	 $("#TOC").attr("data-spy", "affix");
 	 $("#TOC").attr("data-offset-top", "5");
 	$("#TOC").addClass("bs-sidebar");
 	$("#TOC").addClass("hidden-print");
+	
+	 $("#download_pdf").appendTo("#TOC");
+	
 	 /*
 	*/
         var url = window.location.href;
@@ -113,10 +116,11 @@ $(document).ready(function() {
     });
 
 });
+
 </script>
 
 <div class="row documentationBlock">
 		<div class="col-md-3" id="toc_host">
-
+			<div id="download_pdf"><a href="javascript:document.location.href=getPdfUrl();" target="_blank"><i class="fa fa-file-pdf-o"></i> Download PDF<a></div>
 		</div>
 		<div class="col-md-9" style="font-family: 'Open Sans', sans-serif;">

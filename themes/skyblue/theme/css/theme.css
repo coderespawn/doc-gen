@@ -69,6 +69,19 @@ h3 { border-bottom: 1px solid #ccc; }
 
 }
 
+
+#download_pdf {
+	margin:0 auto;
+	text-align:center;
+	margin-top: 10px;
+	color: #2a6496;
+	background-color: #f8f8f8;
+	padding: 5px;
+	font-family: 'Open Sans', sans-serif;
+	font-size: 15px;
+	font-weight: normal;
+}
+
 .documentationBlock {
 	font-family: 'Open Sans', sans-serif;
 }
