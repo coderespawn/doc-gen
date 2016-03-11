@@ -264,17 +264,13 @@ for version in versions:
 	if latest_version_filename is None:
 		latest_version_filename = doc_filename
 
+	if args.pdf:
+		pdf_filename = gen_pdf_file(version)
+
 	if not args.build_all:
 		break
 
 create_index_file(latest_version_filename)
-
-if args.pdf:
-	# Build PDF versions
-	for version in versions:
-		pdf_filename = gen_pdf_file(version)
-		if not args.build_all:
-			break
 
 # Remove the intermediate folder
 shutil.rmtree(meta_dir, True)
