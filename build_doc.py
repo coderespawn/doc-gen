@@ -12,8 +12,9 @@ from os.path import isfile, join
 def parse_args():
 	parser = argparse.ArgumentParser(description='Compile markdown documentation files into HTML')
 	parser.add_argument('source_dir', metavar='source', help='Source path of the documentation')
-	parser.add_argument('-b', '--build_all', help='Build all version from git', action='store_true')
+	parser.add_argument('-b', '--build_all', help='Build all version from git. Also builds pdf', action='store_true')
 	parser.add_argument('-y', '--youtubify', help='Create Youtube embed frames', action='store_true')
+	parser.add_argument('-p', '--pdf', help='Builds the pdf version.', action='store_true')
 	return parser.parse_args()
 
 def yaml_load(filename):
@@ -111,7 +112,7 @@ def compile_pandoc_pdf(source_dir, target_file, version):
 		'-o', target_file,
 	]
 
-	markdown_dir = source_dir + "/source"
+	markdown_dir = source_dir
 	old_working_dir = os.getcwd()
 	os.chdir(markdown_dir)
 
@@ -148,7 +149,19 @@ def gen_pdf_file(version):
 	# Generate html documentation
 	pdf_filename = "%s%s.pdf" % (file_prefix, version)
 	target_file = "%s/%s" % (pdf_dir, pdf_filename)
-	compile_pandoc_pdf(source_dir, target_file, version)
+	md_source_dir = "%s/source" % source_dir
+	if args.youtubify:
+		yt_source_dir = "%s/yt_src" % meta_dir
+		os.makedirs(yt_source_dir)
+		for source_file in os.listdir(md_source_dir):
+			md_source_file = "%s/%s" % (md_source_dir, source_file)
+			yt_source_file = "%s/%s" % (yt_source_dir, source_file)
+			shutil.copy(md_source_file, yt_source_dir)
+			youtubify_pdf(yt_source_file)
+		compile_pandoc_pdf(yt_source_dir, target_file, version)
+	else:
+		compile_pandoc_pdf(md_source_dir, target_file, version)
+		pass
 
 	return pdf_filename
 
@@ -159,8 +172,13 @@ def youtubify(target_file):
 	embed = r'<iframe width="853" height="480" src="https://www.youtube.com/embed/\1?rel=0&amp;showinfo=0" frameborder="0" allowfullscreen></iframe>'
 	file_content = re.sub(pattern, embed, file_content)
 	write_to_file(file_content, target_file)
-	#for (video_id) in re.findall(pattern, file_content):
-	#	print video_id
+	
+def youtubify_pdf(target_file):
+	file_content = read_file(target_file)
+	pattern = re.compile(r'YOUTUBE\((.*?)\)')
+	embed = r'![img](http://img.youtube.com/vi/\1/hqdefault.jpg)\n[View in Youtube](https://www.youtube.com/watch?v=\1)'
+	file_content = re.sub(pattern, embed, file_content)
+	write_to_file(file_content, target_file)
 	
 def fix_os_command(command):
 	cmd_prefix = './'
@@ -251,15 +269,15 @@ for version in versions:
 
 create_index_file(latest_version_filename)
 
+if args.pdf:
+	# Build PDF versions
+	for version in versions:
+		pdf_filename = gen_pdf_file(version)
+		if not args.build_all:
+			break
 
 # Remove the intermediate folder
 shutil.rmtree(meta_dir, True)
-
-# Build PDF versions
-for version in versions:
-	pdf_filename = gen_pdf_file(version)
-	if not args.build_all:
-		break
 
 # If we built for all version, then place the stage directory in the gh-pages branch
 if args.build_all:
