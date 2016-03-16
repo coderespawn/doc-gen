@@ -152,6 +152,7 @@ def gen_pdf_file(version):
 	md_source_dir = "%s/source" % source_dir
 	if args.youtubify:
 		yt_source_dir = "%s/yt_src" % meta_dir
+		shutil.rmtree(yt_source_dir, True)
 		os.makedirs(yt_source_dir)
 		for source_file in os.listdir(md_source_dir):
 			md_source_file = "%s/%s" % (md_source_dir, source_file)
