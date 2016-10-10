@@ -130,7 +130,7 @@ def compile_pandoc_pdf(source_dir, target_file, version):
 
 	p = Popen(pandoc_args, cwd=markdown_dir)
 	out, err = p.communicate()
-	print ("GENERATED PDF", out, err)
+	
 	os.chdir(old_working_dir)
 
 
@@ -150,7 +150,6 @@ def gen_doc_file(version):
 
 def gen_pdf_file(version):
 	file_prefix = doc_meta['file_prefix']
-	
 	# Generate html documentation
 	pdf_filename = "%s%s.pdf" % (file_prefix, version)
 	target_file = "%s/%s" % (pdf_dir, pdf_filename)
@@ -265,6 +264,9 @@ shutil.copytree(source_dir + "/assets", gen_dir + "/assets");
 # Generate document specific dynamic files
 meta_dir = gen_dir + "/tmp"
 os.makedirs(meta_dir)
+
+# Copy the assets to the meta dir
+shutil.copytree(source_dir + "/assets", meta_dir + "/assets");
 
 latest_version_filename = None
 # Build HTML versions
