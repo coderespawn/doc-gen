@@ -6,7 +6,8 @@ import sys
 import yaml
 import shutil
 import argparse
-from subprocess import call, check_output
+import subprocess
+from subprocess import call, Popen, check_output
 from os.path import isfile, join
 
 def parse_args():
@@ -41,6 +42,7 @@ def remove_file(filename):
 def get_template(filename):
 	return read_file(theme_dir + "/" + filename)
 		
+	
 def gen_meta_files(doc_meta, cur_version, versions, meta_dir):
 	# Generate the pdf download link
 	file_prefix = doc_meta['file_prefix']
@@ -95,7 +97,8 @@ def compile_pandoc(source_dir, theme_dir, meta_dir, target_file):
 		md_file_path = md_dir + "/" + md_file
 		pandoc_args.append(md_file_path)
 
-	call(pandoc_args)
+	p = Popen(pandoc_args)
+	p.wait()
 
 
 def compile_pandoc_pdf(source_dir, target_file, version):
@@ -107,7 +110,7 @@ def compile_pandoc_pdf(source_dir, target_file, version):
 		'--variable', 'sansfont="Calibri"', 
 		'--variable', 'monofont="Consolas"', 
 		'--variable', 'fontsize=12pt',
-		'--variable', 'version=' + version, 
+		#'--variable', 'version=' + version, 
 		'--latex-engine=xelatex',
 		'-o', target_file,
 	]
@@ -125,7 +128,9 @@ def compile_pandoc_pdf(source_dir, target_file, version):
 		md_file_path = md_dir + "/" + md_file
 		pandoc_args.append(md_file_path)
 
-	call(pandoc_args)
+	p = Popen(pandoc_args, cwd=markdown_dir)
+	out, err = p.communicate()
+	print ("GENERATED PDF", out, err)
 	os.chdir(old_working_dir)
 
 
@@ -193,14 +198,20 @@ def is_shell_command():
 
 def git_reset_ghpages(git_path):
 	# Pull the changes only if we are in gh-pages to avoid errors during rebuild
-	shell_args = [fix_os_command('reset_ghpages.sh'), git_path]
-	call(shell_args, shell=is_shell_command());
+	p = Popen(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], cwd=git_path)
+	branch_name, err = p.communicate()
+	if (branch_name == "gh-pages"):
+		p = Popen(['git', 'checkout', '.'], cwd=git_path)
+		p.wait()
 
 def git_checkout(git_path, branch):
-	print
-	print "#### Checking out Git Branch:", branch
-	shell_args = [fix_os_command('git_checkout.sh'), git_path, branch]
-	call(shell_args, shell=is_shell_command());
+	p = Popen(['git', 'checkout', branch], cwd=git_path)
+	p.communicate()
+	
+	p = Popen(['git', 'pull'], cwd=git_path)
+	p.communicate()
+	
+	
 
 def create_index_file(redirect_filename):
 	redirect_path = "html/" + redirect_filename
