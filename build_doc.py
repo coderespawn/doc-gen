@@ -7,6 +7,7 @@ import yaml
 import shutil
 import argparse
 import subprocess
+import codecs
 from subprocess import call, Popen, check_output
 from os.path import isfile, join
 
@@ -19,8 +20,8 @@ def parse_args():
 	return parser.parse_args()
 
 def yaml_load(filename):
-	stream = file(filename, 'r')
-	obj = yaml.load(stream)
+	stream = open(filename, 'r')
+	obj = yaml.load(stream, Loader=yaml.FullLoader)
 	stream.close()
 	return obj
 
@@ -77,7 +78,7 @@ def gen_meta_files(doc_meta, cur_version, versions, meta_dir):
 def compile_pandoc(source_dir, theme_dir, meta_dir, target_file):
 	# Get the list of all the source markdown files
 	pandoc_args = [
-		'pandoc', '-s', '-S', '--toc',
+		'pandoc', '--toc',
 		'-o', target_file,
 		'-H', theme_dir + "/include.html",
 		'-B', meta_dir + "/header_fork_me.html",
@@ -257,6 +258,8 @@ if args.build_all:
 theme_name = gen_meta["theme"]
 theme_dir = "themes/" + theme_name
 shutil.copytree(theme_dir + "/theme", gen_dir + "/theme");
+
+print ("Copying %s => %s" % (theme_dir + "/theme", gen_dir + "/theme"));
 
 # Copy the documentation assets
 shutil.copytree(source_dir + "/assets", gen_dir + "/assets");
